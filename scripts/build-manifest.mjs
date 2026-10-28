@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { normalizeLook, lookDiff } from '../js/look.js';
 
 const AUDIO = new Set(['.mp3', '.m4a', '.ogg', '.wav', '.flac']);
-const COVERS = ['cover.jpg', 'cover.jpeg', 'cover.png', 'cover.webp'];
+const COVERS = ['cover.jpg', 'cover.jpeg', 'cover.png', 'cover.webp', 'cover.avif'];
 const STYLES = new Set(['solid', 'translucent', 'marble', 'splatter', 'picture']);
 const HEX = /^#[0-9a-f]{6}$/i;
 

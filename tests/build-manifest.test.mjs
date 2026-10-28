@@ -56,6 +56,12 @@ test('buildManifest reads tracks, cover (case-insensitive), album.json', async (
   assert.deepEqual(warnings, []);
 });
 
+test('buildManifest takes an AVIF cover', async () => {
+  const { dir } = await fixture({ single: { 'cover.avif': 'x', '01 a.mp3': 'x' } });
+  const { albums } = await buildManifest(dir);
+  assert.equal(albums[0].cover, encodePath('albums', 'single', 'cover.avif'));
+});
+
 test('buildManifest skips folders without audio and warns', async () => {
   const { dir } = await fixture({ empty: { 'cover.png': 'x' } });
   const { albums, warnings } = await buildManifest(dir);

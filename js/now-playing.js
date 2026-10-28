@@ -2,7 +2,7 @@
 // song, the album and its cover, and their buttons control the turntable.
 import { startOf } from './timeline.js';
 
-const TYPES = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+const TYPES = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', avif: 'image/avif' };
 
 export function nowPlayingInfo(album, index, baseHref, lpArtwork = null) {
   const cover = album.cover
