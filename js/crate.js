@@ -14,7 +14,7 @@ function el(tag, cls, text) {
 const chevron = (d) =>
   `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-export function createCrate(root, albums, { onPick }) {
+export function createCrate(root, albums, { onPick, onFront = () => {} }) {
   root.replaceChildren();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -25,7 +25,7 @@ export function createCrate(root, albums, { onPick }) {
       el('p', 'crate-empty-hint', '앨범마다 폴더 하나에 cover.jpg와 노래 파일을 넣고 푸시하면 여기에 꽂혀요.'),
     );
     root.append(empty);
-    return { show() {}, hide() {}, focusAlbum() {}, setTint() {}, element: empty };
+    return { show() {}, hide() {}, focusAlbum() {}, setTint() {}, setNowPlaying() {}, element: empty };
   }
 
   const stage = el('div', 'crate-stage');
@@ -59,6 +59,7 @@ export function createCrate(root, albums, { onPick }) {
     card.id = `sleeve-${i}`;
     card.setAttribute('aria-label', `${album.title}${album.artist ? `, ${album.artist}` : ''}`);
     const disc = el('span', 'sleeve-disc');
+    disc.append(el('span', 'disc-face')); // turns on its own while the sleeve slides
     // a real jacket: printed front, two spines with the title, a top edge and shrink-wrap
     const jacket = el('span', 'jacket');
     if (album.cover) {
@@ -93,6 +94,8 @@ export function createCrate(root, albums, { onPick }) {
 
   let index = 0;
   let picking = false;
+  let playingId = null; // the album still on the platter, its record half out of the sleeve
+  let playingNow = false;
 
   // pos may be fractional while a finger drags the row
   function layout(pos = index) {
@@ -112,8 +115,10 @@ export function createCrate(root, albums, { onPick }) {
     if (pos !== index) return;
     list.setAttribute('aria-activedescendant', cards[index].id);
     const a = albums[index];
+    onFront(a);
     capTitle.textContent = a.title;
-    capMeta.textContent = [a.artist, `${a.tracks.length}곡`].filter(Boolean).join(' · ');
+    capMeta.textContent = [a.artist, `${a.tracks.length}곡`, a.id === playingId && (playingNow ? '♪ 재생 중' : '일시정지')]
+      .filter(Boolean).join(' · ');
     prev.disabled = index === 0;
     next.disabled = index === albums.length - 1;
   }
@@ -218,7 +223,7 @@ export function createCrate(root, albums, { onPick }) {
   });
 
   layout();
-  addEventListener('resize', layout);
+  addEventListener('resize', () => layout()); // not layout itself: the event would arrive as pos
 
   return {
     element: stage,
@@ -231,6 +236,27 @@ export function createCrate(root, albums, { onPick }) {
     focusAlbum(id) {
       const i = albums.findIndex((a) => a.id === id);
       if (i >= 0) go(i);
+    },
+    // np: { id, image?, playing, spinning, secPerTurn } or null when nothing is left playing
+    setNowPlaying(np) {
+      playingId = np?.id ?? null;
+      playingNow = !!np?.playing;
+      albums.forEach((album, i) => {
+        const card = cards[i];
+        const on = album.id === playingId;
+        card.classList.toggle('now-playing', on);
+        card.classList.toggle('spinning', on && !!np.spinning);
+        const face = card.querySelector('.disc-face');
+        if (on && np.image) {
+          face.style.backgroundImage = `url("${np.image}")`;
+          face.classList.add('decorated');
+        } else if (!on) {
+          face.style.backgroundImage = '';
+          face.classList.remove('decorated');
+        }
+        if (on) card.style.setProperty('--turn', `${np.secPerTurn}s`);
+      });
+      layout();
     },
     setTint(id, color) {
       const i = albums.findIndex((a) => a.id === id);

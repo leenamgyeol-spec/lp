@@ -3,6 +3,7 @@ import { createCrate } from './crate.js';
 import { createTurntable } from './turntable.js';
 import { loadCover, designFor } from './vinyl.js';
 import { connectMediaSession } from './now-playing.js';
+import { DEG_PER_SEC } from './deck-core.js';
 import { albumIdFromHash, hashForAlbum } from './router.js';
 
 const toastEl = document.getElementById('toast');
@@ -36,12 +37,21 @@ connectMediaSession(player, deck);
 const albums = await loadAlbums();
 let current = null; // album on the platter
 
+// The room takes its light from a cover: the sleeve in front, or the record on the deck.
+function setBackdrop(screen, album) {
+  const url = album?.cover ? new URL(album.cover, document.baseURI).href : null;
+  screen.style.setProperty('--cover', url ? `url("${url}")` : 'none');
+}
+
 const crate = createCrate(document.getElementById('crate'), albums, {
   onPick(album) {
     history.pushState({ fromCrate: true }, '', hashForAlbum(album.id));
     openDeck(album);
   },
+  onFront: (album) => setBackdrop(crateScreen, album),
 });
+document.getElementById('crate-count').textContent =
+  albums.length ? `${String(albums.length).padStart(2, '0')} Records` : '';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const hideTimers = new Map();
@@ -61,6 +71,8 @@ function swapScreens(show, hide) {
 
 function openDeck(album) {
   crate.hide();
+  crate.setNowPlaying(null);
+  setBackdrop(deckScreen, album);
   deck.setVisible(true);
   swapScreens(deckScreen, crateScreen);
   if (current !== album) {
@@ -70,14 +82,37 @@ function openDeck(album) {
   document.title = `${album.title} — lp`;
 }
 
+// The record left on the platter, shown sticking out of its sleeve in the crate.
+let recordImage = null;
+function syncNowPlaying() {
+  if (crateScreen.hidden || crateScreen.classList.contains('leaving')) return;
+  const np = deck.nowPlaying();
+  if (!np || np.album !== current) return crate.setNowPlaying(null);
+  crate.setNowPlaying({
+    id: np.album.id,
+    image: recordImage,
+    playing: np.playing,
+    spinning: np.spinning,
+    secPerTurn: 360 / DEG_PER_SEC[np.rpm],
+  });
+}
+deck.onChange(syncNowPlaying);
+
 function openCrate() {
   if (current) crate.focusAlbum(current.id);
-  current = null;
-  deck.eject();
+  // a record that is playing keeps playing; anything else goes back in its sleeve
+  if (current && deck.nowPlaying()?.playing) {
+    recordImage = deck.recordImage();
+  } else {
+    current = null;
+    recordImage = null;
+    deck.eject();
+  }
   deck.setVisible(false);
   swapScreens(crateScreen, deckScreen);
   crate.show();
-  document.title = 'LP 턴테이블';
+  syncNowPlaying();
+  document.title = current ? `♪ ${current.title} — lp` : 'LP 턴테이블';
 }
 
 function route() {

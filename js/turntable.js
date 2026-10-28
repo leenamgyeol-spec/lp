@@ -116,13 +116,14 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
 
   const side = document.createElement('div');
   side.className = 'deck-side';
-  side.innerHTML = '<div class="nowplaying" aria-live="off"><p class="np-title"></p><p class="np-artist"></p><p class="np-track"></p></div><p class="deck-hint"></p>';
+  side.innerHTML = '<div class="nowplaying" aria-live="off"><p class="eyebrow np-eyebrow"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="np-state"></span></p><p class="np-title"></p><p class="np-artist"></p><p class="np-track"></p></div><p class="deck-hint"></p>';
   root.append(tt, side);
 
   const q = (sel) => tt.querySelector(sel);
   const record = q('.tt-record'), spin = q('.tt-spin'), canvas = q('canvas');
   const playBtn = q('.tt-btn.play'), playCap = playBtn.querySelector('.cap');
   const hint = side.querySelector('.deck-hint');
+  const npState = side.querySelector('.np-state');
   const npTitle = side.querySelector('.np-title'), npArtist = side.querySelector('.np-artist'), npTrack = side.querySelector('.np-track');
 
   arm.setAttribute('tabindex', '0');
@@ -357,8 +358,9 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
   let last = performance.now();
   let lastText = 0;
   function frame(now) {
+    // the deck keeps running behind the crate, so a record left playing carries on
+    core.tick((now - last) / 1000, now);
     if (active) {
-      core.tick((now - last) / 1000, now);
       spin.style.transform = `rotate(${s.rotation}deg)`;
       arm.setAttribute('transform', `rotate(${s.angle - 90} ${PIVOT.x} ${PIVOT.y})`);
       const lift = Math.max(0, s.lift);
@@ -379,6 +381,8 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
     playBtn.setAttribute('aria-pressed', String(playing));
     playBtn.setAttribute('aria-label', playing ? '정지' : '재생');
     tt.classList.toggle('motor-on', s.motorOn);
+    side.classList.toggle('is-playing', playing && !s.ended);
+    npState.textContent = !s.album ? '' : s.ended ? 'Side finished' : playing ? 'Now playing' : s.needleDown ? 'Paused' : 'On the platter';
     for (const b of tt.querySelectorAll('.tt-speed button')) b.setAttribute('aria-pressed', String(Number(b.dataset.rpm) === s.rpm));
     record.classList.toggle('empty', s.phase !== 'loaded');
     const i = core.info();
@@ -452,6 +456,20 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
     remotePause: core.remotePause,
     skip: core.skip,
     setVisible(on) { active = on; },
+    // what the crate shows on the sleeve of the record left on the platter
+    nowPlaying() {
+      if (!s.album || s.phase !== 'loaded') return null;
+      return { album: s.album, playing: s.motorOn && s.needleDown && !s.ended, spinning: s.motorOn, rpm: s.rpm };
+    },
+    // the record as it is decorated now, drawn small and without a background
+    recordImage(px = 480) {
+      if (!current || !lastDraw) return null;
+      const c = document.createElement('canvas');
+      c.width = c.height = px;
+      renderVinyl(c, current.album, current.design, current.cover, lastDraw[3]);
+      return c.toDataURL('image/png');
+    },
+    onChange: core.onChange,
     lpArtwork: () => artworkUrl,
     onArtwork(fn) { artworkListeners.add(fn); },
   };

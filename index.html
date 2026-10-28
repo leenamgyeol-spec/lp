@@ -8,10 +8,10 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23161210'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23ffb04a'/%3E%3Ccircle cx='16' cy='16' r='1.4' fill='%23161210'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#f3f1ec">
+  <meta name="theme-color" content="#050505">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="lp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,13 +22,19 @@
 <body>
   <main class="app">
     <section class="screen crate-screen" id="crate-screen" aria-labelledby="crate-heading">
+      <div class="backdrop" aria-hidden="true"></div>
       <header class="crate-head">
-        <h1 class="brand" id="crate-heading">lp</h1>
-        <p class="crate-sub">넘겨서 고르고, 눌러서 꺼내요</p>
+        <div>
+          <h1 class="brand" id="crate-heading">lp</h1>
+          <p class="crate-sub">오늘 들을 레코드를 골라요</p>
+        </div>
+        <p class="eyebrow crate-count" id="crate-count"></p>
       </header>
       <div class="crate" id="crate"></div>
+      <p class="eyebrow crate-hint">넘겨서 고르고 · 눌러서 꺼내요</p>
     </section>
     <section class="screen deck-screen" id="deck-screen" aria-label="턴테이블" hidden>
+      <div class="backdrop" aria-hidden="true"></div>
       <button type="button" class="back" id="back">
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         레코드 고르기
