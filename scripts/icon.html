@@ -1,65 +1,10 @@
 <!doctype html>
-<!-- Draws the home-screen icon. Render with a headless browser at the target size, e.g.
-     msedge --headless=new --hide-scrollbars --window-size=180,180 --screenshot=icons/apple-touch-icon.png "scripts/icon.html?s=180" -->
+<!-- Draws the home-screen icon from icons/icon.svg at the size asked for. Render with a headless browser, e.g.
+     msedge --headless=new --hide-scrollbars --window-size=180,180 --screenshot=icons/icon-180.png "scripts/icon.html?s=180" -->
 <meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
-<style>html,body{margin:0;background:#24160f;overflow:hidden}canvas{display:block}</style>
-<canvas id="c"></canvas>
-<script type="module">
-await document.fonts.load('italic 100px "Instrument Serif"');
+<style>html,body{margin:0;background:#070606;overflow:hidden}img{display:block}</style>
+<img id="i" src="../icons/icon.svg" alt="">
+<script>
 const S = Number(new URLSearchParams(location.search).get('s')) || Math.min(innerWidth, innerHeight);
-const c = document.getElementById('c');
-c.width = c.height = S;
-const x = c.getContext('2d');
-
-// walnut, lit from the top left
-const bg = x.createLinearGradient(0, 0, S, S);
-bg.addColorStop(0, '#5e3a24');
-bg.addColorStop(0.55, '#3d2416');
-bg.addColorStop(1, '#24160f');
-x.fillStyle = bg;
-x.fillRect(0, 0, S, S);
-x.globalAlpha = 0.06;
-for (let i = 0; i < S * 0.9; i++) { // grain
-  const y = (i * 7.31) % S, w = 0.4 + ((i * 13) % 7) / 10;
-  x.fillStyle = i % 3 ? '#000' : '#f3c995';
-  x.fillRect(0, y, S, w * S / 512);
-}
-x.globalAlpha = 1;
-
-// the record, nudged down-right so it sits like it's on a platter
-const cx = S * 0.53, cy = S * 0.54, R = S * 0.39;
-x.save();
-x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = S * 0.06; x.shadowOffsetY = S * 0.025;
-x.fillStyle = '#121010';
-x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.fill();
-x.restore();
-x.lineWidth = Math.max(0.6, S / 700);
-for (let r = R * 0.42; r < R * 0.97; r += Math.max(1.4, S / 260)) {
-  x.strokeStyle = `rgba(255,255,255,${0.03 + ((r * 31) % 5) / 140})`;
-  x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.stroke();
-}
-// light catching the grooves
-const sheen = x.createConicGradient(-0.6, cx, cy);
-sheen.addColorStop(0, 'rgba(255,255,255,0)');
-sheen.addColorStop(0.06, 'rgba(255,236,200,.22)');
-sheen.addColorStop(0.13, 'rgba(255,255,255,0)');
-sheen.addColorStop(0.5, 'rgba(255,255,255,0)');
-sheen.addColorStop(0.56, 'rgba(255,236,200,.14)');
-sheen.addColorStop(0.62, 'rgba(255,255,255,0)');
-x.fillStyle = sheen;
-x.beginPath(); x.arc(cx, cy, R * 0.97, 0, Math.PI * 2); x.arc(cx, cy, R * 0.4, 0, Math.PI * 2, true); x.fill();
-
-// amber label with the wordmark
-const lg = x.createRadialGradient(cx - R * 0.1, cy - R * 0.12, R * 0.02, cx, cy, R * 0.36);
-lg.addColorStop(0, '#ffc56e');
-lg.addColorStop(1, '#f39a2a');
-x.fillStyle = lg;
-x.beginPath(); x.arc(cx, cy, R * 0.36, 0, Math.PI * 2); x.fill();
-x.fillStyle = '#2a170c';
-x.font = `italic ${R * 0.25}px "Instrument Serif"`;
-x.textAlign = 'center'; x.textBaseline = 'alphabetic';
-x.fillText('lp', cx - R * 0.01, cy - R * 0.11);
-x.fillStyle = '#1a0f09';
-x.beginPath(); x.arc(cx, cy, R * 0.028, 0, Math.PI * 2); x.fill();
+document.getElementById('i').width = document.getElementById('i').height = S;
 </script>

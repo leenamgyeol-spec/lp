@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Home-screen icon: the logo on the dark room, with the amber light behind the record.
+       Render to PNG with scripts/icon.html. -->
+  <defs>
+    <radialGradient id="glow" cx="62%" cy="52%" r="60%">
+      <stop offset="0" stop-color="#ffad4d" stop-opacity=".28"/>
+      <stop offset=".45" stop-color="#ffad4d" stop-opacity=".06"/>
+      <stop offset="1" stop-color="#ffad4d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c1916"/>
+      <stop offset="1" stop-color="#070606"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <g transform="translate(100 102) scale(3.08)" color="#f1ebe0">
+    <rect x="4" y="4" width="12" height="70" rx="6" fill="currentColor"/>
+    <rect x="26" y="28" width="12" height="68" rx="6" fill="currentColor"/>
+    <circle cx="67" cy="51" r="27" fill="#0b0a09" stroke="currentColor" stroke-width="6"/>
+    <circle cx="67" cy="51" r="19.5" fill="none" stroke="currentColor" stroke-opacity=".22" stroke-width=".9"/>
+    <circle cx="67" cy="51" r="15.5" fill="none" stroke="currentColor" stroke-opacity=".16" stroke-width=".9"/>
+    <path d="M67 51 L86 33 A27 27 0 0 1 91 42 Z" fill="currentColor" fill-opacity=".12"/>
+    <circle cx="67" cy="51" r="9.5" fill="#ffad4d"/>
+    <rect x="61.5" y="45" width="7" height="2.2" rx="1.1" fill="#0b0a09" fill-opacity=".55"/>
+    <circle cx="67" cy="51" r="1.8" fill="#0b0a09"/>
+  </g>
+</svg>

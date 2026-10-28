@@ -85,6 +85,7 @@ function openDeck(album) {
 // The record left on the platter, shown sticking out of its sleeve in the crate.
 let recordImage = null;
 function syncNowPlaying() {
+  document.body.classList.toggle('is-spinning', !!deck.nowPlaying()?.spinning);
   if (crateScreen.hidden || crateScreen.classList.contains('leaving')) return;
   const np = deck.nowPlaying();
   if (!np || np.album !== current) return crate.setNowPlaying(null);

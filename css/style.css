@@ -92,17 +92,11 @@ button { font: inherit; color: inherit; }
 .screen.leaving, .screen.entering { opacity: 0; }
 .screen.leaving { position: fixed; inset: 0; pointer-events: none; }
 
-.brand {
-  margin: 0;
-  font-family: var(--serif);
-  font-weight: 400;
-  font-style: italic;
-  font-size: clamp(48px, 5.4vw, 72px);
-  line-height: .8;
-  letter-spacing: -.03em;
-  color: var(--ink);
-}
-.brand::after { content: "."; color: var(--accent); font-style: normal; }
+.brand { margin: 0; line-height: 0; color: var(--ink); }
+.logo { display: block; height: clamp(48px, 5.4vw, 68px); width: auto; overflow: visible; }
+/* the record in the logo turns while a record is playing, and on a hover */
+.logo-disc { transform-box: fill-box; transform-origin: center; animation: disc-turn 1.8s linear infinite paused; }
+.brand:hover .logo-disc, body.is-spinning .logo-disc { animation-play-state: running; }
 
 /* ---------- crate: cover flow ---------- */
 
@@ -117,7 +111,7 @@ button { font: inherit; color: inherit; }
   display: flex; align-items: flex-end; justify-content: space-between; gap: 14px;
   padding-bottom: 14px; border-bottom: 1px solid var(--line);
 }
-.crate-head > div { display: flex; align-items: baseline; gap: 16px; }
+.crate-head > div { display: flex; align-items: center; gap: 16px; }
 .crate-sub { margin: 0; font-size: 13px; color: var(--ink-dim); }
 .crate-count { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
 @media (max-width: 520px) { .crate-sub { display: none; } }

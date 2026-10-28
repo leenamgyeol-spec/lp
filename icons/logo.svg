@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 104 104">
+  <!-- Browser-tab icon: the logo on a rounded dark tile -->
+  <rect width="104" height="104" rx="22" fill="#0c0b0a"/>
+  <g transform="translate(9 9) scale(.84)" color="#f1ebe0">
+    <rect x="4" y="4" width="12" height="70" rx="6" fill="currentColor"/>
+    <rect x="26" y="28" width="12" height="68" rx="6" fill="currentColor"/>
+    <circle cx="67" cy="51" r="27" fill="#0b0a09" stroke="currentColor" stroke-width="6"/>
+    <circle cx="67" cy="51" r="9.5" fill="#ffad4d"/>
+    <circle cx="67" cy="51" r="2" fill="#0b0a09"/>
+  </g>
+</svg>
