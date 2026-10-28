@@ -3,7 +3,6 @@
   "artist": "Drake",
   "year": 2018,
   "vinyl": { "style": "translucent", "color": "#c9a24a", "shape": "round", "size": 7 },
-  "label": { "mode": "text", "color": "#111111", "text": "#c9a24a", "showTitle": true },
   "deck": { "body": "#1a1a1a", "arm": "gold" },
   "rpm": 45
 }
