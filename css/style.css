@@ -70,6 +70,8 @@ body::after {
 }
 
 button { font: inherit; color: inherit; }
+/* covers and records are things to flip and spin, never to drag off as files */
+img, canvas, svg { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; }
 
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 

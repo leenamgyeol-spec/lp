@@ -67,6 +67,7 @@ export function createCrate(root, albums, { onPick, onFront = () => {} }) {
       img.src = album.cover;
       img.alt = '';
       img.decoding = 'async';
+      img.draggable = false; // a drag flips the sleeves, it must not pick up the picture
       img.onerror = () => { img.remove(); jacket.prepend(el('span', 'jacket-plain', album.title)); };
       jacket.append(img);
     } else {
