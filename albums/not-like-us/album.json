@@ -1,0 +1,9 @@
+{
+  "title": "Not Like Us",
+  "artist": "Kendrick Lamar",
+  "year": 2024,
+  "vinyl": { "style": "splatter", "color": "#b3121b", "accent": "#111111", "shape": "round", "size": 7 },
+  "label": { "mode": "text", "size": 0.4, "color": "#f2ece0", "text": "#b3121b", "showTitle": true, "ring": true },
+  "deck": { "body": "#1a1a1a", "arm": "silver" },
+  "rpm": 45
+}

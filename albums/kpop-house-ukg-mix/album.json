@@ -1,0 +1,8 @@
+{
+  "title": "Kpop House & UK Garage Mix",
+  "artist": "EthanKo",
+  "vinyl": { "style": "marble", "color": "#7b4dff", "accent": "#ff6fb5", "shape": "round", "size": 12 },
+  "label": { "mode": "text", "size": 0.36, "color": "#111111", "text": "#ff6fb5", "showTitle": true, "ring": true },
+  "deck": { "body": "#e9e4f5", "arm": "black" },
+  "rpm": 33
+}
