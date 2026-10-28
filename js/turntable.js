@@ -4,7 +4,7 @@
 import { PLINTH, PIVOT, ARM_LENGTH, clampAngle } from './arm.js';
 import { loadCover, designFor, renderVinyl, coverPalette } from './vinyl.js';
 import { deckColors, rgbToHsl, hexToRgb } from './palette.js';
-import { createDeckCore, bindDeckKeys } from './deck-core.js';
+import { createDeckCore, bindDeckKeys, fmt } from './deck-core.js';
 import { defaultLook, mergeLook, normalizeLook, lookDiff, albumJsonSnippet, grooveFor, SIZE_FACTOR, INSCRIBED } from './look.js';
 import { createLookStore } from './look-store.js';
 import { createCustomizer } from './customizer.js';
@@ -116,6 +116,11 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
   const side = document.createElement('div');
   side.className = 'deck-side';
   side.innerHTML = '<div class="nowplaying" aria-live="off"><p class="eyebrow np-eyebrow"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="np-state"></span></p><p class="np-title"></p><p class="np-artist"></p><p class="np-track"></p></div><p class="deck-hint"></p>';
+  // every song on the record, to tap and play
+  const tracklist = document.createElement('ol');
+  tracklist.className = 'tracklist';
+  tracklist.setAttribute('aria-label', '곡 목록');
+  side.querySelector('.nowplaying').after(tracklist);
   root.append(tt, side);
 
   const q = (sel) => tt.querySelector(sel);
@@ -380,6 +385,7 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
     npState.textContent = !s.album ? '' : s.ended ? 'Side finished' : playing ? 'Now playing' : s.needleDown ? 'Paused' : 'On the platter';
     for (const b of tt.querySelectorAll('.tt-speed button')) b.setAttribute('aria-pressed', String(Number(b.dataset.rpm) === s.rpm));
     record.classList.toggle('empty', s.phase !== 'loaded');
+    renderTracks();
     const i = core.info();
     npTitle.textContent = i.title;
     npArtist.textContent = i.artist;
@@ -389,6 +395,36 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
     arm.setAttribute('aria-valuetext', i.ariaText);
   }
   core.onChange(updateText);
+
+  // Rebuilt when the record or its track lengths change; otherwise only the playing row moves.
+  let listKey = '';
+  function renderTracks() {
+    const album = s.phase === 'loaded' ? s.album : null;
+    const durations = player.durations;
+    const key = album ? `${album.id}|${durations.join(',')}` : '';
+    if (key !== listKey) {
+      listKey = key;
+      tracklist.replaceChildren(...(album ? album.tracks.map((track, n) => {
+        const li = document.createElement('li');
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'track';
+        b.innerHTML = '<span class="track-no"></span><span class="track-title"></span><span class="track-len"></span>';
+        b.querySelector('.track-no').textContent = String(n + 1).padStart(2, '0');
+        b.querySelector('.track-title').textContent = track.title;
+        b.querySelector('.track-len').textContent = durations[n] > 0 ? fmt(durations[n]) : '';
+        b.addEventListener('click', () => { engine.wake(); core.playTrack(n); });
+        li.append(b);
+        return li;
+      }) : []));
+    }
+    const on = album && s.needleDown && !s.ended ? locate(player.durations, player.time).index : -1;
+    tracklist.querySelectorAll('.track').forEach((b, n) => {
+      b.classList.toggle('current', n === on);
+      if (n === on) b.setAttribute('aria-current', 'true');
+      else b.removeAttribute('aria-current');
+    });
+  }
 
   // ---- lock-screen picture: the record as it looks now, on the deck's background ----
   let artworkUrl = null;

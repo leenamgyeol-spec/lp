@@ -44,6 +44,21 @@ test('dropping the needle mid-song plays from right there', async () => {
   assert.ok(Math.abs(player.time - 5) < 0.05, `time ${player.time}`);
 });
 
+test('picking a song from the list plays it from its start', async () => {
+  const { player, core } = await mounted();
+  const swing = core.playTrack(1);
+  for (let i = 0; i < 10; i++) core.tick(0.1, performance.now() + 1000); // let the arm swing in
+  await swing;
+  await sleep(450);
+  assert.equal(core.state.needleDown, true);
+  assert.equal(core.state.motorOn, true);
+  assert.equal(player.index, 1);
+  assert.equal(player.time, 10);
+  core.playTrack(0); // with the needle already down it hops straight there
+  assert.equal(player.index, 0);
+  assert.equal(player.time, 0);
+});
+
 test('setting the needle on the record starts it; parking the arm stops it', async () => {
   const { player, core } = await mounted();
   drop(core, 0.68);

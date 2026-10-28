@@ -52,14 +52,16 @@ export function createDeckCore(player, view, { now = () => performance.now() } =
     player.seek(radiusToTime(r, player.total, s.groove));
   }
 
-  function dropNeedleAt(r) {
+  // atSec: an exact time to play from (a track picked from the list), else the groove under r
+  function dropNeedleAt(r, atSec = null) {
     clearTimeout(dropTimer);
     dropTimer = setTimeout(() => {
       setNeedle(true);
       s.ended = false;
       // Track lengths may still be loading; seek again by position once they arrive.
       pendingR = player.total > 0 ? null : r;
-      seekToTrackUnder(r);
+      if (atSec != null && player.total > 0) player.seek(atSec);
+      else seekToTrackUnder(r);
       view.setHint('');
       changed();
     }, NEEDLE_DROP_MS);
@@ -117,6 +119,24 @@ export function createDeckCore(player, view, { now = () => performance.now() } =
       return;
     }
     setMotor(!s.motorOn);
+  }
+
+  // A song picked from the track list: the arm swings to the start of its groove and drops there.
+  async function playTrack(index) {
+    if (!s.album || s.dragging || s.scratching) return;
+    const durations = player.durations;
+    const i = Math.max(0, Math.min(s.album.tracks.length - 1, index));
+    const t = startOf(durations, i);
+    setMotor(true);
+    s.ended = false;
+    if (s.needleDown) { // already playing: the needle hops across
+      player.seek(t);
+      changed();
+      return;
+    }
+    const r = player.total > 0 ? timeToRadius(t, player.total, s.groove) : s.groove.outer;
+    await tweenTo(angleForRadius(r));
+    dropNeedleAt(r, t);
   }
 
   function skip(delta) {
@@ -306,7 +326,7 @@ export function createDeckCore(player, view, { now = () => performance.now() } =
     state: s,
     tick, idle, info, setGroove, maxAngle, startScratch, scratchTo, endScratch,
     startDrag, dragTo, endDrag,
-    setMotor, toggleMotor: () => setMotor(!s.motorOn), setRpm, togglePlay, skip,
+    setMotor, toggleMotor: () => setMotor(!s.motorOn), setRpm, togglePlay, skip, playTrack,
     remotePlay, remotePause, mount, eject,
     onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
   };
