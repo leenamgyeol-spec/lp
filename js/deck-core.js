@@ -1,6 +1,6 @@
 // How the turntable behaves, independent of how it is drawn: motor, speed, needle,
 // tonearm angle and keeping the audio in step. The 2D and 3D decks both render this state.
-import { GROOVE, radiusToTime, timeToRadius, startOf, locate, trackStartAt } from './timeline.js';
+import { GROOVE, radiusToTime, timeToRadius, startOf, locate } from './timeline.js';
 import { ARM, angleForRadius, radiusForAngle } from './arm.js';
 import { armLift } from './deck-geometry.js';
 
@@ -47,9 +47,9 @@ export function createDeckCore(player, view, { now = () => performance.now() } =
     });
   }
 
-  // The needle always starts the track it lands on from the top.
+  // The needle plays from exactly where it lands, mid-song included; in the run-out it stays silent.
   function seekToTrackUnder(r) {
-    player.seek(trackStartAt(player.durations, radiusToTime(r, player.total, s.groove)));
+    player.seek(radiusToTime(r, player.total, s.groove));
   }
 
   function dropNeedleAt(r) {

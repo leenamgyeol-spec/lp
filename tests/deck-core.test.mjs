@@ -34,13 +34,14 @@ function drop(core, r) {
   core.endDrag();
 }
 
-test('dropping the needle mid-album starts the track under it from the top', async () => {
+test('dropping the needle mid-song plays from right there', async () => {
   const { player, core } = await mounted();
   core.setMotor(true);
-  drop(core, 0.68); // halfway through 20s → inside track 2
+  drop(core, 0.82); // a quarter of the way through 20s → 5 s into track 1
   await sleep(450);
   assert.equal(core.state.needleDown, true);
-  assert.equal(player.time, 10);
+  assert.equal(player.index, 0);
+  assert.ok(Math.abs(player.time - 5) < 0.05, `time ${player.time}`);
 });
 
 test('setting the needle on the record starts it; parking the arm stops it', async () => {
@@ -150,13 +151,14 @@ test('eject lets go of the album so the lock screen can clear', async () => {
   assert.equal(unloaded, true);
 });
 
-test('on a 7-inch record the needle still starts the track under it', async () => {
+test('on a 7-inch record the needle plays from where it lands', async () => {
   const { player, core } = await mounted();
   core.setGroove({ outer: 0.5568, inner: 0.232 });
   core.setMotor(true);
-  drop(core, (0.5568 + 0.232) / 2 - 0.01); // a bit past halfway → track 2
+  drop(core, (0.5568 + 0.232) / 2 - 0.01); // a bit past halfway → early in track 2
   await sleep(450);
-  assert.equal(player.time, 10);
+  assert.equal(player.index, 1);
+  assert.ok(player.time > 10 && player.time < 11, `time ${player.time}`);
 });
 
 test('dropping on the mat around a small record sends the arm back to rest', async () => {
