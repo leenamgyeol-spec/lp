@@ -43,6 +43,21 @@ test('dropping the needle mid-album starts the track under it from the top', asy
   assert.equal(player.time, 10);
 });
 
+test('setting the needle on the record starts it; parking the arm stops it', async () => {
+  const { player, core } = await mounted();
+  drop(core, 0.68);
+  assert.equal(core.state.motorOn, true);
+  await sleep(450);
+  for (let i = 0; i < 10; i++) core.tick(0.1, 1e6 + i * 100); // the platter comes up to speed
+  assert.equal(core.state.needleDown, true);
+  assert.equal(player.audio.paused, false);
+  core.startDrag();
+  core.dragTo(90);
+  core.endDrag();
+  assert.equal(core.state.motorOn, false);
+  assert.equal(core.state.needleDown, false);
+});
+
 test('the run-out stops the record', async () => {
   const { player, core } = await mounted();
   core.setMotor(true);

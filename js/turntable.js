@@ -105,7 +105,6 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
       <button type="button" data-rpm="45" aria-pressed="false">45</button>
     </div>
     <div class="tt-controls">
-      <button type="button" class="tt-btn play" aria-pressed="false"><span class="key"></span><span class="cap">PLAY</span></button>
       <div class="group">
         <button type="button" class="tt-btn prev" aria-label="이전 곡"><span class="key"></span><span class="cap">${icon.prev}</span></button>
         <button type="button" class="tt-btn next" aria-label="다음 곡"><span class="key"></span><span class="cap">${icon.next}</span></button>
@@ -121,7 +120,6 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
 
   const q = (sel) => tt.querySelector(sel);
   const record = q('.tt-record'), spin = q('.tt-spin'), canvas = q('canvas');
-  const playBtn = q('.tt-btn.play'), playCap = playBtn.querySelector('.cap');
   const hint = side.querySelector('.deck-hint');
   const npState = side.querySelector('.np-state');
   const npTitle = side.querySelector('.np-title'), npArtist = side.querySelector('.np-artist'), npTrack = side.querySelector('.np-track');
@@ -223,6 +221,7 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
   }
   grab.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    engine.wake(); // the arm is the play key now, so audio unlocks from this touch
     try { grab.setPointerCapture(e.pointerId); } catch { /* pointer already released */ }
     core.startDrag();
   });
@@ -347,7 +346,6 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
   }
 
   // ---- keys ----
-  playBtn.addEventListener('click', () => { engine.wake(); core.togglePlay(); });
   q('.tt-btn.prev').addEventListener('click', () => core.skip(-1));
   q('.tt-btn.next').addEventListener('click', () => core.skip(1));
   for (const b of tt.querySelectorAll('.tt-speed button')) b.addEventListener('click', () => core.setRpm(Number(b.dataset.rpm)));
@@ -377,9 +375,6 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
 
   function updateText() {
     const playing = s.motorOn && s.needleDown;
-    playCap.textContent = playing ? 'STOP' : 'PLAY';
-    playBtn.setAttribute('aria-pressed', String(playing));
-    playBtn.setAttribute('aria-label', playing ? '정지' : '재생');
     tt.classList.toggle('motor-on', s.motorOn);
     side.classList.toggle('is-playing', playing && !s.ended);
     npState.textContent = !s.album ? '' : s.ended ? 'Side finished' : playing ? 'Now playing' : s.needleDown ? 'Paused' : 'On the platter';

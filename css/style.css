@@ -406,7 +406,7 @@ button { font: inherit; color: inherit; }
 
 .tt-controls {
   position: absolute; left: 6%; right: 6%; bottom: 3.5%;
-  display: flex; align-items: flex-start; justify-content: space-between;
+  display: flex; align-items: flex-start; justify-content: flex-end;
   z-index: 2;
 }
 .tt-controls .group { display: flex; gap: calc(var(--w) * .035); }

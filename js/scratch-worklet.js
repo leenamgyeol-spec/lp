@@ -22,6 +22,10 @@ class LpScratch extends AudioWorkletProcessor {
     this.gainTarget = 0;
     this.stopping = false;
     this.sinceReport = 0;
+    // the needle dragged through the groove: hiss and crackle that grow with the hand's speed
+    this.hp = 0; this.lastWhite = 0; // one-pole high-pass on the hiss
+    this.pop = 0;                    // the click now ringing out
+    this.popDecay = Math.exp(-1 / (0.0007 * sampleRate)); // ~0.7 ms clicks
     this.rateAlpha = 1 - Math.exp(-1 / (0.016 * sampleRate)); // 16 ms glide between rates
     this.gainStep = 1 / (0.015 * sampleRate);                  // 15 ms fades
     this.port.onmessage = ({ data }) => {
@@ -64,7 +68,19 @@ class LpScratch extends AudioWorkletProcessor {
       this.rate += (this.target - this.rate) * this.rateAlpha;
       if (this.gain < this.gainTarget) this.gain = Math.min(this.gainTarget, this.gain + this.gainStep);
       else if (this.gain > this.gainTarget) this.gain = Math.max(this.gainTarget, this.gain - this.gainStep);
-      const v = s && this.gain > 0 ? readLinear(s, this.pos) * this.gain : 0;
+      let v = 0;
+      if (s && this.gain > 0) {
+        const speed = Math.min(3, Math.abs(this.rate));
+        // hiss: white noise with the lows taken out, only while the record moves
+        const white = Math.random() * 2 - 1;
+        this.hp = 0.92 * (this.hp + white - this.lastWhite);
+        this.lastWhite = white;
+        // crackle: random clicks, more of them the faster the groove passes the needle
+        if (Math.random() < speed * (24 / sampleRate)) this.pop = (Math.random() < 0.5 ? -1 : 1) * (0.08 + Math.random() * 0.22);
+        else this.pop *= this.popDecay;
+        const grit = this.hp * 0.035 * Math.min(1, speed) + this.pop * Math.min(1, speed * 2);
+        v = (readLinear(s, this.pos) + grit) * this.gain;
+      }
       for (let c = 0; c < out.length; c++) out[c][i] = v;
       if (s && this.gain > 0) {
         // stops dead at either end of the decoded stretch instead of reading past it

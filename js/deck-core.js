@@ -102,8 +102,9 @@ export function createDeckCore(player, view, { now = () => performance.now() } =
     if (!s.dragging) return;
     s.dragging = false;
     const r = radiusForAngle(s.angle);
-    if (s.album && r <= s.groove.outer + 0.02) dropNeedleAt(r);
-    else returnToRest();
+    // there is no play key: setting the needle on the record starts it, parking the arm stops it
+    if (s.album && r <= s.groove.outer + 0.02) { setMotor(true); dropNeedleAt(r); }
+    else { setMotor(false); returnToRest(); }
     changed();
   }
 
