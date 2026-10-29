@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>lp mini</title>
+  <meta name="description" content="바탕화면에 띄워 두는 작은 LP 플레이어">
+  <link rel="icon" href="icons/logo.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#070606">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/mini.css">
+</head>
+<body>
+  <main class="mini">
+    <div class="mini-backdrop" aria-hidden="true"></div>
+    <button type="button" class="mini-record" id="record" aria-label="재생">
+      <canvas width="560" height="560"></canvas>
+    </button>
+    <div class="mini-info">
+      <p class="mini-track" id="track"></p>
+      <p class="mini-album" id="album"></p>
+    </div>
+    <div class="mini-progress" aria-hidden="true"><i id="bar"></i></div>
+    <div class="mini-controls">
+      <button type="button" class="mini-btn" id="prev" aria-label="이전 레코드">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="mini-btn play" id="play" aria-label="재생">
+        <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
+        <svg class="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
+      </button>
+      <button type="button" class="mini-btn" id="next" aria-label="다음 레코드">
+        <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <a class="mini-open" id="open" href="./" target="_blank" rel="noopener">턴테이블로 열기 ↗</a>
+  </main>
+  <script type="module" src="js/mini.js"></script>
+</body>
+</html>

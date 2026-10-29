@@ -1,0 +1,71 @@
+/* The mini player: sized for a small window parked on the desktop */
+:root {
+  --ink: #f1ebe0;
+  --ink-dim: rgba(241, 235, 224, .55);
+  --line: rgba(241, 235, 224, .12);
+  --accent: #ffad4d;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #070606; }
+body {
+  color: var(--ink);
+  font: 14px/1.4 "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; overflow: hidden;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+img, canvas, svg { -webkit-user-drag: none; }
+
+.mini {
+  position: relative; isolation: isolate; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  padding: 18px 18px 14px;
+}
+.mini-backdrop {
+  position: absolute; inset: -20%; z-index: -1;
+  background: center / cover no-repeat;
+  filter: blur(50px) saturate(1.5) brightness(.6); opacity: .55;
+  transition: background-image .6s ease;
+}
+.mini-backdrop::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, transparent 0, rgba(7, 6, 6, .7) 70%);
+}
+
+.mini-record {
+  width: min(64vw, 52vh, 260px); aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%;
+  background: none; cursor: pointer;
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .7));
+}
+.mini-record canvas {
+  width: 100%; height: 100%; display: block;
+  animation: turn var(--turn, 1.8s) linear infinite paused;
+}
+body.playing .mini-record canvas { animation-play-state: running; }
+@keyframes turn { to { transform: rotate(360deg); } }
+
+.mini-info { width: 100%; text-align: center; min-width: 0; }
+.mini-info p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-track { font-size: 17px; font-weight: 800; letter-spacing: -.03em; }
+.mini-album { margin-top: 2px !important; font-size: 12px; color: var(--ink-dim); }
+
+.mini-progress { width: 100%; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.mini-progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s linear; }
+
+.mini-controls { display: flex; align-items: center; gap: 18px; }
+.mini-btn {
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid var(--line); background: rgba(28, 26, 24, .55); cursor: pointer;
+  backdrop-filter: blur(12px); transition: transform .15s, background .15s;
+}
+.mini-btn:hover { background: rgba(48, 45, 42, .75); }
+.mini-btn:active { transform: scale(.94); }
+.mini-btn svg { width: 18px; height: 18px; }
+.mini-btn.play { width: 52px; height: 52px; border: 0; background: var(--ink); color: #121110; }
+.mini-btn.play svg { width: 22px; height: 22px; }
+.mini-btn .i-pause, body.playing .mini-btn .i-play { display: none; }
+body.playing .mini-btn .i-pause { display: block; }
+
+.mini-open { font-size: 11px; letter-spacing: .04em; color: var(--ink-dim); text-decoration: none; }
+.mini-open:hover { color: var(--ink); }

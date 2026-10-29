@@ -31,7 +31,7 @@ jobs:
       - name: Collect site files
         run: |
           mkdir -p _site albums
-          cp -r index.html manifest.webmanifest albums.json css js icons albums _site/
+          cp -r index.html mini.html manifest.webmanifest albums.json css js icons albums widget _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
