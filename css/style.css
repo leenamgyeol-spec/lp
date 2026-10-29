@@ -468,6 +468,8 @@ img, canvas, svg { -webkit-user-drag: none; user-select: none; -webkit-user-sele
   color: var(--deck-ink); cursor: ns-resize; touch-action: none; outline: none;
 }
 .tt-volume[hidden] { display: none; }
+/* only iOS Safari knows -webkit-touch-callout; it ignores page volume, so no knob there either way */
+@supports (-webkit-touch-callout: none) { .tt-volume { display: none; } }
 .tt-volume .dial {
   --angle: 135deg; --level: 1;
   position: relative; width: calc(var(--w) * .12); aspect-ratio: 1;
