@@ -427,7 +427,9 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
   }
 
   // ---- lock-screen picture: the record as it looks now, on the deck's background ----
-  let artworkUrl = null;
+  // Drawn at several turns of the record, so the lock screen can step through them while it plays.
+  const ART_FRAMES = 12;
+  let artworkFrames = [];
   const artworkListeners = new Set();
   let artTimer = 0;
   function scheduleArtwork(delay = 500) {
@@ -440,17 +442,26 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
     const c = document.createElement('canvas');
     c.width = c.height = 512;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = getComputedStyle(screen ?? root).getPropertyValue('--deck-bg').trim() || '#f3f1ec';
-    ctx.fillRect(0, 0, 512, 512);
+    const bg = getComputedStyle(screen ?? root).getPropertyValue('--deck-bg').trim() || '#f3f1ec';
     const rc = document.createElement('canvas');
     rc.width = rc.height = 456;
     renderVinyl(rc, album, current.design, current.cover, lastDraw[3]);
-    ctx.shadowColor = 'rgba(0,0,0,0.35)';
-    ctx.shadowBlur = 26;
-    ctx.shadowOffsetY = 10;
-    ctx.drawImage(rc, 28, 22);
-    // a data: URL, not blob:, so the system's Now Playing can always read it
-    artworkUrl = c.toDataURL('image/jpeg', 0.86);
+    const frames = [];
+    for (let k = 0; k < ART_FRAMES; k++) {
+      ctx.save();
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 512, 512);
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = 26;
+      ctx.shadowOffsetY = 10;
+      ctx.translate(256, 250);
+      ctx.rotate((k / ART_FRAMES) * Math.PI * 2);
+      ctx.drawImage(rc, -228, -228);
+      ctx.restore();
+      // a data: URL, not blob:, so the system's Now Playing can always read it
+      frames.push(c.toDataURL('image/jpeg', 0.86));
+    }
+    artworkFrames = frames;
     for (const fn of artworkListeners) fn();
   }
 
@@ -479,7 +490,7 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
       dropGrab();
       current = null;
       clearTimeout(artTimer);
-      artworkUrl = null;
+      artworkFrames = [];
       customizer.detach();
       core.eject();
     },
@@ -501,7 +512,8 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
       return c.toDataURL('image/png');
     },
     onChange: core.onChange,
-    lpArtwork: () => artworkUrl,
+    // step: how far the record has turned on the lock screen (any integer; wraps round)
+    lpArtwork: (step = 0) => artworkFrames.length ? artworkFrames[((step % ART_FRAMES) + ART_FRAMES) % ART_FRAMES] : null,
     onArtwork(fn) { artworkListeners.add(fn); },
   };
 }
