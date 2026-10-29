@@ -5,6 +5,7 @@ import { loadCover, designFor } from './vinyl.js';
 import { connectMediaSession } from './now-playing.js';
 import { DEG_PER_SEC } from './deck-core.js';
 import { albumIdFromHash, hashForAlbum } from './router.js';
+import { nextAlbum } from './deck-settings.js';
 
 const toastEl = document.getElementById('toast');
 let toastTimer = 0;
@@ -123,6 +124,37 @@ function route() {
   if (id != null) history.replaceState(null, '', location.pathname + location.search);
   if (!crateScreen.hidden && deckScreen.hidden) return;
   openCrate();
+}
+
+// AUTO: a side that plays out on its own makes way for the next record in the crate,
+// on the deck or behind the crate, and on the lock screen too.
+const CHANGE_DELAY_MS = 2500; // a breath in the run-out before the record comes off
+player.addEventListener('ended', (e) => {
+  if (!e.detail?.natural || !deck.autoChange() || !current) return;
+  const from = current;
+  setTimeout(() => {
+    const np = deck.nowPlaying();
+    if (current !== from || np?.album !== from || !np.ended) return; // someone took over meanwhile
+    changeRecord(nextAlbum(albums, from.id));
+  }, CHANGE_DELAY_MS);
+});
+
+async function changeRecord(album) {
+  if (!album) return;
+  const onDeck = !deckScreen.hidden;
+  if (album !== current) {
+    current = album;
+    if (onDeck) {
+      history.replaceState(history.state, '', hashForAlbum(album.id));
+      setBackdrop(deckScreen, album);
+    }
+    await deck.mount(album);
+    if (current !== album) return;
+  }
+  document.title = onDeck ? `${album.title} — lp` : `♪ ${album.title} — lp`;
+  if (!onDeck) recordImage = deck.recordImage();
+  await deck.autoStart({ instant: document.hidden });
+  syncNowPlaying();
 }
 
 document.getElementById('back').addEventListener('click', () => {

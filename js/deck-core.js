@@ -316,6 +316,17 @@ export function createDeckCore(player, view, { now = () => performance.now() } =
     player.play();
   }
 
+  // The auto-changer put this record on: the arm swings in by itself. A hidden page gets no
+  // animation frames, so there it goes straight to playing like the lock-screen button.
+  async function autoStart({ instant = false } = {}) {
+    if (!s.album || s.dragging || s.scratching) return;
+    if (instant) return remotePlay();
+    liftNeedle(); // the same record again: up out of the run-out first
+    setMotor(true);
+    await tweenTo(angleForRadius(s.groove.outer));
+    dropNeedleAt(s.groove.outer);
+  }
+
   function remotePause() {
     setMotor(false);
     s.audible = false;
@@ -327,18 +338,20 @@ export function createDeckCore(player, view, { now = () => performance.now() } =
     tick, idle, info, setGroove, maxAngle, startScratch, scratchTo, endScratch,
     startDrag, dragTo, endDrag,
     setMotor, toggleMotor: () => setMotor(!s.motorOn), setRpm, togglePlay, skip, playTrack,
-    remotePlay, remotePause, mount, eject,
+    remotePlay, remotePause, autoStart, mount, eject,
     onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
   };
 }
 
-// Space plays or pauses, ← → change tracks — except while typing or on a focused button.
-export function bindDeckKeys(core, isActive = () => true) {
+// Space plays or pauses, ← → change tracks, ↑ ↓ turn the volume — except while typing or on a focused button.
+export function bindDeckKeys(core, isActive = () => true, { nudgeVolume = () => {} } = {}) {
   document.addEventListener('keydown', (e) => {
     if (!isActive() || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.target.closest?.('button, input, textarea, select, a')) return;
     if (e.code === 'Space') { e.preventDefault(); core.togglePlay(); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); core.skip(1); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); core.skip(-1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); nudgeVolume(0.05); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); nudgeVolume(-0.05); }
   });
 }

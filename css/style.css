@@ -445,6 +445,53 @@ img, canvas, svg { -webkit-user-drag: none; user-select: none; -webkit-user-sele
 }
 .tt.motor-on .tt-pilot { background: #ff8a1f; box-shadow: 0 0 10px 2px rgba(255, 138, 31, .65); }
 
+/* auto-changer switch under the speed keys: its lamp lights when on */
+.tt-auto {
+  position: absolute; right: 6.5%; top: calc(930 / 1300 * 100%); z-index: 2;
+  display: inline-flex; align-items: center; gap: calc(var(--w) * .012);
+  min-width: calc(var(--w) * .19); justify-content: center; padding: calc(var(--w) * .008) 0;
+  border-radius: 999px; border: 1px solid color-mix(in srgb, var(--deck-ink) 25%, transparent);
+  background: transparent; color: var(--deck-ink);
+  font-size: calc(var(--w) * .022); font-weight: 700; letter-spacing: .08em; cursor: pointer; opacity: .6;
+}
+.tt-auto .led {
+  width: calc(var(--w) * .013); aspect-ratio: 1; border-radius: 50%;
+  background: color-mix(in srgb, var(--deck-ink) 25%, transparent); transition: background .3s, box-shadow .3s;
+}
+.tt-auto[aria-pressed="true"] { opacity: 1; background: color-mix(in srgb, var(--deck-ink) 12%, transparent); }
+.tt-auto[aria-pressed="true"] .led { background: #ff8a1f; box-shadow: 0 0 6px 1px rgba(255, 138, 31, .6); }
+
+/* volume knob: drag up and down; the ring shows how far it's turned */
+.tt-volume {
+  position: absolute; left: 11%; top: calc(1010 / 1300 * 100%); z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: calc(var(--w) * .012);
+  color: var(--deck-ink); cursor: ns-resize; touch-action: none; outline: none;
+}
+.tt-volume[hidden] { display: none; }
+.tt-volume .dial {
+  --angle: 135deg; --level: 1;
+  position: relative; width: calc(var(--w) * .12); aspect-ratio: 1;
+}
+.tt-volume .dial::before {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from -135deg, #ff8a1f calc(var(--level) * 270deg), color-mix(in srgb, var(--deck-ink) 18%, transparent) 0 270deg, transparent 0);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 80%, #000 82% 98%, transparent);
+          mask: radial-gradient(circle closest-side, transparent 80%, #000 82% 98%, transparent);
+}
+.tt-volume .knob {
+  position: absolute; inset: 14%; border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #3a3938, #121111 70%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 3px 0 rgba(0, 0, 0, .35), 0 8px 14px -6px rgba(0, 0, 0, .5);
+  rotate: var(--angle);
+}
+.tt-volume .tick {
+  position: absolute; left: 50%; top: 12%; width: 8%; height: 26%; translate: -50% 0;
+  border-radius: 999px; background: #f4efe6;
+}
+.tt-volume.turning .knob, .tt-volume:active .knob { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), 0 1px 0 rgba(0, 0, 0, .35), 0 4px 8px -4px rgba(0, 0, 0, .5); }
+.tt-volume:focus-visible .dial { outline: 2px dashed var(--focus); outline-offset: 3px; }
+.tt-volume .cap { font-size: calc(var(--w) * .022); font-weight: 600; letter-spacing: .08em; opacity: .75; line-height: 1; }
+
 /* ---------- now playing ---------- */
 
 .nowplaying p { margin: 0; }

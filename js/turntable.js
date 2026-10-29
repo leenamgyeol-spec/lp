@@ -11,6 +11,14 @@ import { createCustomizer } from './customizer.js';
 import { createScratchEngine } from './scratch.js';
 import { unwrapDelta, rateFromVelocity, smoothVelocity } from './scratch-math.js';
 import { locate, startOf } from './timeline.js';
+import { createDeckSettings, knobAngle, gainFor, levelAfterDrag } from './deck-settings.js';
+
+// iOS keeps audio volume at 1 and leaves loudness to the phone's buttons
+function canSetVolume() {
+  const a = new Audio();
+  a.volume = 0.5;
+  return a.volume === 0.5;
+}
 
 // tonearm metal: tube gradient stops and pivot dome stops
 const ARM_METAL = {
@@ -103,6 +111,11 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
     <div class="tt-speed" role="group" aria-label="회전 속도">
       <button type="button" data-rpm="33" aria-pressed="true">33</button>
       <button type="button" data-rpm="45" aria-pressed="false">45</button>
+    </div>
+    <button type="button" class="tt-auto" aria-pressed="false" title="앨범이 끝나면 다음 레코드를 올려요"><span class="led" aria-hidden="true"></span>AUTO</button>
+    <div class="tt-volume" role="slider" tabindex="0" aria-label="볼륨" aria-valuemin="0" aria-valuemax="100">
+      <span class="dial" aria-hidden="true"><span class="knob"><span class="tick"></span></span></span>
+      <span class="cap" aria-hidden="true">VOL</span>
     </div>
     <div class="tt-controls">
       <div class="group">
@@ -355,7 +368,60 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
   q('.tt-btn.next').addEventListener('click', () => core.skip(1));
   for (const b of tt.querySelectorAll('.tt-speed button')) b.addEventListener('click', () => core.setRpm(Number(b.dataset.rpm)));
   let active = true;
-  bindDeckKeys(core, () => active);
+  bindDeckKeys(core, () => active, { nudgeVolume: (d) => volumeKnob && setVolume(settings.volume + d) });
+
+  // ---- volume knob: drag up or down, the wheel, or arrow keys ----
+  const settings = createDeckSettings();
+  const volumeEl = q('.tt-volume'), dial = q('.tt-volume .dial');
+  const volumeKnob = canSetVolume();
+  volumeEl.hidden = !volumeKnob;
+  function setVolume(level) {
+    const v = settings.setVolume(level);
+    const g = gainFor(v);
+    player.volume = g;
+    engine.setVolume(g);
+    dial.style.setProperty('--angle', `${knobAngle(v)}deg`);
+    dial.style.setProperty('--level', String(v));
+    volumeEl.setAttribute('aria-valuenow', String(Math.round(v * 100)));
+    volumeEl.setAttribute('aria-valuetext', `${Math.round(v * 100)}%`);
+  }
+  setVolume(settings.volume);
+  let turning = null;
+  volumeEl.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    volumeEl.focus();
+    try { volumeEl.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+    turning = { y: e.clientY, from: settings.volume };
+    volumeEl.classList.add('turning');
+  });
+  volumeEl.addEventListener('pointermove', (e) => {
+    if (turning) setVolume(levelAfterDrag(turning.from, e.clientY - turning.y));
+  });
+  const stopTurning = () => { turning = null; volumeEl.classList.remove('turning'); };
+  volumeEl.addEventListener('pointerup', stopTurning);
+  volumeEl.addEventListener('pointercancel', stopTurning);
+  volumeEl.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    setVolume(settings.volume - Math.sign(e.deltaY) * 0.05);
+  }, { passive: false });
+  volumeEl.addEventListener('keydown', (e) => {
+    const step = { ArrowUp: 0.05, ArrowRight: 0.05, ArrowDown: -0.05, ArrowLeft: -0.05, PageUp: 0.2, PageDown: -0.2 }[e.key];
+    if (step != null) setVolume(settings.volume + step);
+    else if (e.key === 'Home') setVolume(0);
+    else if (e.key === 'End') setVolume(1);
+    else return;
+    e.preventDefault();
+    e.stopPropagation(); // the deck's own ← → are track keys
+  });
+
+  // ---- AUTO: when a side plays out, the next record in the crate goes on ----
+  const autoBtn = q('.tt-auto');
+  autoBtn.setAttribute('aria-pressed', String(settings.autoChange));
+  autoBtn.addEventListener('click', () => {
+    const on = settings.setAutoChange(!settings.autoChange);
+    autoBtn.setAttribute('aria-pressed', String(on));
+    notify(on ? '연속 재생: 앨범이 끝나면 다음 레코드를 올려요' : '연속 재생을 껐어요');
+  });
 
   // ---- frame loop ----
   let last = performance.now();
@@ -496,12 +562,14 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
     },
     remotePlay: core.remotePlay,
     remotePause: core.remotePause,
+    autoStart: core.autoStart,
+    autoChange: () => settings.autoChange,
     skip: core.skip,
     setVisible(on) { active = on; },
     // what the crate shows on the sleeve of the record left on the platter
     nowPlaying() {
       if (!s.album || s.phase !== 'loaded') return null;
-      return { album: s.album, playing: s.motorOn && s.needleDown && !s.ended, spinning: s.motorOn, rpm: s.rpm };
+      return { album: s.album, playing: s.motorOn && s.needleDown && !s.ended, ended: s.ended, spinning: s.motorOn, rpm: s.rpm };
     },
     // the record as it is decorated now, drawn small and without a background
     recordImage(px = 480) {

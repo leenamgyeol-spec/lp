@@ -81,3 +81,19 @@ test('loading the next album after the run-out measures its tracks', async () =>
   assert.deepEqual(durations, [10, 10, 10]);
   assert.equal(p.total, 30);
 });
+
+test('ended says whether the side played out on its own', async () => {
+  FakeAudio.hold = false;
+  const p = new Player();
+  await p.load(album('ok-1', 'ok-2'));
+  await tick();
+  const ends = [];
+  p.addEventListener('ended', (e) => ends.push(e.detail.natural));
+  p.play();
+  p.seek(p.total); // the needle set in the run-out
+  p.play();
+  p.seek(15);
+  await tick();
+  p.audio.dispatchEvent(new Event('ended')); // the last track finished
+  assert.deepEqual(ends, [false, true]);
+});

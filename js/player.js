@@ -87,6 +87,10 @@ export class Player extends EventTarget {
   get total() { return this.durations.reduce((a, d) => a + d, 0); }
   get index() { return this._index; }
   get playing() { return !this.audio.paused; }
+  // 0–1. iOS ignores this (the phone's buttons set the volume) — see canSetVolume.
+  get volume() { return this.audio.volume; }
+  set volume(v) { this.audio.volume = Math.max(0, Math.min(1, v)); }
+
   get time() { return startOf(this.durations, this._index) + (this.audio.currentTime || 0); }
 
   seek(t) {
@@ -118,7 +122,7 @@ export class Player extends EventTarget {
     if (this._index !== last) { this._index = last; this.audio.src = this.album.tracks[last].src; this._emit('track', { index: last }); }
     this._want = false;
     this.audio.pause();
-    this._emit('ended');
+    this._emit('ended', { natural: false });
   }
 
   _advance() {
@@ -126,7 +130,7 @@ export class Player extends EventTarget {
     if (next === -1) {
       this._want = false;
       this.audio.pause();
-      this._emit('ended');
+      this._emit('ended', { natural: true }); // the side played out on its own
       return;
     }
     this._setTrack(next, 0);

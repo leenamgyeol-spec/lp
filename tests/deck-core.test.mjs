@@ -226,3 +226,28 @@ test('ejecting mid-scratch ends the scratch', async () => {
   core.eject();
   assert.equal(core.state.scratching, false);
 });
+
+test('autoStart with instant drops the needle at the start and plays', async () => {
+  const { player, core } = await mounted();
+  await core.autoStart({ instant: true });
+  await sleep(10);
+  assert.equal(core.state.needleDown, true);
+  assert.equal(player.audio.paused, false);
+  assert.equal(player.time, 0);
+});
+
+test('autoStart after the run-out lifts the needle and swings back to the first groove', async () => {
+  const { core } = await mounted();
+  core.setMotor(true);
+  drop(core, 0.38);
+  await sleep(450);
+  assert.equal(core.state.ended, true);
+  const going = core.autoStart();
+  assert.equal(core.state.needleDown, false);
+  for (let i = 1; i <= 10; i++) core.tick(0.1, 1e9 + i * 100); // the arm swings across
+  await going;
+  await sleep(450);
+  assert.equal(core.state.ended, false);
+  assert.equal(core.state.needleDown, true);
+  assert.equal(core.state.motorOn, true);
+});
