@@ -427,25 +427,44 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
   });
 
   // ---- frame loop ----
+  // Runs only while something moves; a settled deck sleeps until core.onChange wakes it.
+  // Behind the crate a record left playing needs no drawing, just a few ticks a second
+  // so it carries on, and phones with 120 Hz screens are drawn at 60.
   let last = performance.now();
-  let lastText = 0;
+  let lastText = 0, lastPaint = 0, scheduled = false;
+  let drawn = {}; // what the DOM shows now, so unchanged parts aren't touched
   function frame(now) {
-    // the deck keeps running behind the crate, so a record left playing carries on
+    scheduled = false;
     core.tick((now - last) / 1000, now);
-    if (active) {
-      spin.style.transform = `rotate(${s.rotation}deg)`;
-      arm.setAttribute('transform', `rotate(${s.angle - 90} ${PIVOT.x} ${PIVOT.y})`);
-      const lift = Math.max(0, s.lift);
+    last = now;
+    const settled = core.idle();
+    if (active) render(now, settled);
+    if (!settled) schedule();
+  }
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+    if (active) requestAnimationFrame(frame);
+    else setTimeout(() => frame(performance.now()), 250);
+  }
+  function render(now, force) {
+    if (!force && now - lastPaint < 15) return;
+    lastPaint = now;
+    if (drawn.rotation !== s.rotation) spin.style.transform = `rotate(${s.rotation}deg)`;
+    if (drawn.angle !== s.angle) arm.setAttribute('transform', `rotate(${s.angle - 90} ${PIVOT.x} ${PIVOT.y})`);
+    const lift = Math.max(0, s.lift);
+    // the shadow is an SVG filter, costly to redraw: only when the arm rises or settles
+    if (drawn.lift !== lift) {
       shadow.setAttribute('dx', 6 + 14 * lift);
       shadow.setAttribute('dy', 7 + 16 * lift);
       shadow.setAttribute('stdDeviation', 4 + 6 * lift);
-      tt.classList.toggle('dragging', s.dragging);
-      if (now - lastText > 250) { lastText = now; updateText(); }
     }
-    last = now;
-    requestAnimationFrame(frame);
+    drawn = { rotation: s.rotation, angle: s.angle, lift };
+    tt.classList.toggle('dragging', s.dragging);
+    if (force || now - lastText > 250) { lastText = now; updateText(); }
   }
-  requestAnimationFrame(frame);
+  core.onChange(schedule);
+  schedule();
 
   function updateText() {
     const playing = s.motorOn && s.needleDown;
@@ -557,7 +576,11 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
     autoStart: core.autoStart,
     autoChange: () => settings.autoChange,
     skip: core.skip,
-    setVisible(on) { active = on; },
+    setVisible(on) {
+      active = on;
+      drawn = {}; // the deck may have moved while it wasn't drawn
+      schedule();
+    },
     // what the crate shows on the sleeve of the record left on the platter
     nowPlaying() {
       if (!s.album || s.phase !== 'loaded') return null;
