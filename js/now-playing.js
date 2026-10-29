@@ -26,29 +26,20 @@ export function connectMediaSession(player, deck) {
     if (!(d > 0) || !ms.setPositionState) return;
     try { ms.setPositionState({ duration: d, position: Math.min(d, audio.currentTime || 0), playbackRate: 1 }); } catch { /* not supported */ }
   };
-  let turn = 0; // which of the record's turned pictures the lock screen shows
   const refresh = () => {
     if (!player.album) return;
-    const lp = deck.lpArtwork?.(turn);
+    const lp = deck.lpArtwork?.();
     ms.metadata = new MediaMetadata(nowPlayingInfo(player.album, player.index, document.baseURI,
       lp ? { src: lp, sizes: '512x512', type: 'image/jpeg' } : null));
     position();
   };
 
-  // The lock screen can't animate, so while the music plays the picture is swapped for the
-  // record turned a little further, once a second: the closest it gets to a spinning LP.
-  let spinTimer = 0;
-  const spin = (on) => {
-    clearInterval(spinTimer);
-    if (on) spinTimer = setInterval(() => { turn++; refresh(); }, 1000);
-  };
-
   player.addEventListener('track', refresh);
   player.addEventListener('durations', refresh);
   deck.onArtwork?.(refresh);
-  player.addEventListener('unload', () => { spin(false); ms.metadata = null; ms.playbackState = 'none'; });
-  audio.addEventListener('play', () => { ms.playbackState = 'playing'; refresh(); spin(true); });
-  audio.addEventListener('pause', () => { spin(false); ms.playbackState = 'paused'; position(); });
+  player.addEventListener('unload', () => { ms.metadata = null; ms.playbackState = 'none'; });
+  audio.addEventListener('play', () => { ms.playbackState = 'playing'; refresh(); });
+  audio.addEventListener('pause', () => { ms.playbackState = 'paused'; position(); });
   audio.addEventListener('seeked', position);
 
   const on = (action, fn) => { try { ms.setActionHandler(action, fn); } catch { /* action not supported */ } };

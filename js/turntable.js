@@ -13,8 +13,11 @@ import { unwrapDelta, rateFromVelocity, smoothVelocity } from './scratch-math.js
 import { locate, startOf } from './timeline.js';
 import { createDeckSettings, knobAngle, gainFor, levelAfterDrag } from './deck-settings.js';
 
-// iOS keeps audio volume at 1 and leaves loudness to the phone's buttons
+// iPhone and iPad ignore a page's audio volume (newer iOS even reads the value back) and leave
+// loudness to the device's buttons; an iPad asking for the desktop site says Macintosh but has touch.
 function canSetVolume() {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return false;
   const a = new Audio();
   a.volume = 0.5;
   return a.volume === 0.5;
@@ -493,9 +496,7 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
   }
 
   // ---- lock-screen picture: the record as it looks now, on the deck's background ----
-  // Drawn at several turns of the record, so the lock screen can step through them while it plays.
-  const ART_FRAMES = 12;
-  let artworkFrames = [];
+  let artworkUrl = null;
   const artworkListeners = new Set();
   let artTimer = 0;
   function scheduleArtwork(delay = 500) {
@@ -508,26 +509,17 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
     const c = document.createElement('canvas');
     c.width = c.height = 512;
     const ctx = c.getContext('2d');
-    const bg = getComputedStyle(screen ?? root).getPropertyValue('--deck-bg').trim() || '#f3f1ec';
+    ctx.fillStyle = getComputedStyle(screen ?? root).getPropertyValue('--deck-bg').trim() || '#f3f1ec';
+    ctx.fillRect(0, 0, 512, 512);
     const rc = document.createElement('canvas');
     rc.width = rc.height = 456;
     renderVinyl(rc, album, current.design, current.cover, lastDraw[3]);
-    const frames = [];
-    for (let k = 0; k < ART_FRAMES; k++) {
-      ctx.save();
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, 512, 512);
-      ctx.shadowColor = 'rgba(0,0,0,0.35)';
-      ctx.shadowBlur = 26;
-      ctx.shadowOffsetY = 10;
-      ctx.translate(256, 250);
-      ctx.rotate((k / ART_FRAMES) * Math.PI * 2);
-      ctx.drawImage(rc, -228, -228);
-      ctx.restore();
-      // a data: URL, not blob:, so the system's Now Playing can always read it
-      frames.push(c.toDataURL('image/jpeg', 0.86));
-    }
-    artworkFrames = frames;
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 26;
+    ctx.shadowOffsetY = 10;
+    ctx.drawImage(rc, 28, 22);
+    // a data: URL, not blob:, so the system's Now Playing can always read it
+    artworkUrl = c.toDataURL('image/jpeg', 0.86);
     for (const fn of artworkListeners) fn();
   }
 
@@ -556,7 +548,7 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
       dropGrab();
       current = null;
       clearTimeout(artTimer);
-      artworkFrames = [];
+      artworkUrl = null;
       customizer.detach();
       core.eject();
     },
@@ -580,8 +572,7 @@ export function createTurntable(root, player, { notify = () => {} } = {}) {
       return c.toDataURL('image/png');
     },
     onChange: core.onChange,
-    // step: how far the record has turned on the lock screen (any integer; wraps round)
-    lpArtwork: (step = 0) => artworkFrames.length ? artworkFrames[((step % ART_FRAMES) + ART_FRAMES) % ART_FRAMES] : null,
+    lpArtwork: () => artworkUrl,
     onArtwork(fn) { artworkListeners.add(fn); },
   };
 }

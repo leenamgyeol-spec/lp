@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { nowPlayingInfo, connectMediaSession } from '../js/now-playing.js';
+import { nowPlayingInfo } from '../js/now-playing.js';
 
 const album = {
   id: 'channel-orange', title: 'Channel ORANGE', artist: 'Frank Ocean',
@@ -46,28 +46,4 @@ test('the LP picture comes first, the cover stays as a fallback', () => {
 
 test('without an LP picture the cover is used', () => {
   assert.equal(nowPlayingInfo(album, 0, base).artwork.length, 1);
-});
-
-test('while playing, the lock screen steps through the turned LP pictures', async () => {
-  const shown = [];
-  const ms = {
-    set metadata(m) { if (m) shown.push(m.artwork[0].src); },
-    playbackState: 'none',
-    setActionHandler() {},
-  };
-  Object.defineProperty(globalThis, 'navigator', { value: { mediaSession: ms }, configurable: true }); // Node's own is read-only
-  globalThis.MediaMetadata = class { constructor(info) { Object.assign(this, info); } };
-  globalThis.document = { baseURI: base };
-  const audio = new EventTarget();
-  audio.currentTime = 0;
-  const player = Object.assign(new EventTarget(), { audio, album, index: 0, durations: [10, 10] });
-  const deck = { lpArtwork: (step) => `frame-${((step % 12) + 12) % 12}`, onArtwork() {} };
-  connectMediaSession(player, deck);
-  audio.dispatchEvent(new Event('play'));
-  await new Promise((r) => setTimeout(r, 2150));
-  audio.dispatchEvent(new Event('pause'));
-  const stopped = shown.length;
-  await new Promise((r) => setTimeout(r, 1100));
-  assert.deepEqual(shown.slice(0, 3), ['frame-0', 'frame-1', 'frame-2']);
-  assert.equal(shown.length, stopped); // paused: the picture stops turning
 });
